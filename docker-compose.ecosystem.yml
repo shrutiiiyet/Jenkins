@@ -1,0 +1,192 @@
+# =============================================================================
+# COC-Ecosystem — Unified Docker Compose
+# Spins up all services from pre-built DockerHub images.
+#
+# Usage (Postgres):
+#   COMPOSE_PROFILES=postgres docker compose -f docker-compose.ecosystem.yml up -d
+#
+# Usage (MySQL):
+#   COMPOSE_PROFILES=mysql docker compose -f docker-compose.ecosystem.yml up -d
+# =============================================================================
+
+services:
+
+  # =========================================================================
+  # Database — PostgreSQL (default)
+  # =========================================================================
+  postgres-db:
+    image: postgres:17
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: coc
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - coc-network
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "coc", "-h", "127.0.0.1", "-p", "5432"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # =========================================================================
+  # Database — MySQL (alternative)
+  # =========================================================================
+  mysql-db:
+    image: mysql:8.0
+    profiles: ["mysql"]
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: coc
+    volumes:
+      - mysqldata:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      - coc-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pexample"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # =========================================================================
+  # COC API — Central API Gateway
+  # =========================================================================
+  coc-api:
+    image: shrutiiiyet/coc-api
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DATABASE_URL}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SESSION_POOLER: ${SESSION_POOLER:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+    networks:
+      - coc-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # =========================================================================
+  # Member Backend
+  # =========================================================================
+  coc-member-backend:
+    image: shrutiiiyet/coc-member-backend
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      PORT: "3000"
+      NODE_ENV: production
+      API_URL: "http://coc-api:3000/api/v1"
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET}
+      SALTING: ${SALTING}
+      RATE_LIMIT_WINDOW_MINUTES: ${RATE_LIMIT_WINDOW_MINUTES:-15}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      REFRESH_TTL: ${REFRESH_TTL:-7}
+      ACCESS_TTL: ${ACCESS_TTL:-15}
+      EMAIL_ID: ${EMAIL_ID:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3001/auth/google/callback}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL:-http://localhost:3001/auth/github/callback}
+    depends_on:
+      coc-api:
+        condition: service_healthy
+    networks:
+      - coc-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # =========================================================================
+  # Member Frontend
+  # =========================================================================
+  coc-member-frontend:
+    image: shrutiiiyet/coc-member-frontend
+    ports:
+      - "127.0.0.1:5174:5173"
+    environment:
+      VITE_API_URL: "http://localhost:3001"
+    depends_on:
+      coc-member-backend:
+        condition: service_healthy
+    networks:
+      - coc-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # Admin Backend
+  # =========================================================================
+  coc-admin-backend:
+    image: shrutiiiyet/coc-admin-backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      PORT: "8000"
+      NODE_ENV: production
+      API_URL: "http://coc-api:3000/api/v1"
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_SECRET: ${REFRESH_SECRET}
+      SALTING: ${SALTING}
+      RATE_LIMIT_WINDOW_MINUTES: ${RATE_LIMIT_WINDOW_MINUTES:-15}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      REFRESH_TTL: ${REFRESH_TTL:-7}
+      ACCESS_TTL: ${ACCESS_TTL:-15}
+      EMAIL_ID: ${EMAIL_ID:-}
+      CONTACT_EMAIL_ID: ${CONTACT_EMAIL_ID:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+    depends_on:
+      coc-api:
+        condition: service_healthy
+    networks:
+      - coc-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # =========================================================================
+  # Admin Frontend
+  # =========================================================================
+  coc-admin-frontend:
+    image: shrutiiiyet/coc-admin-frontend
+    ports:
+      - "127.0.0.1:5173:5173"
+    environment:
+      VITE_API_URL: "http://localhost:8000"
+      VITE_GIF_URL: ${VITE_GIF_URL:-}
+    depends_on:
+      coc-admin-backend:
+        condition: service_healthy
+    networks:
+      - coc-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mysqldata:
+
+networks:
+  coc-network:
+    driver: bridge
