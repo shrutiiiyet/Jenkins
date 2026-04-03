@@ -216,13 +216,18 @@ echo "" >> "$OUTPUT"
 
 # Extract and convert INSERT lines
 # - Remove public. schema prefix
+# - Convert double quotes to backticks for MySQL identifiers
 # - Convert 'true'/'false' boolean strings to TRUE/FALSE
 # - Strip the PostgreSQL ENUM type casts like public."Difficulty" etc.
 grep -E '^INSERT INTO|^\(' "$INPUT" | \
   sed 's/public\.//g' | \
-  sed "s/public\.\"Difficulty\"//g" | \
-  sed "s/public\.\"Verdict\"//g" | \
-  >> "$OUTPUT"
+  sed 's/"/`/g' | \
+  sed "s/'true'/TRUE/ig" | \
+  sed "s/'false'/FALSE/ig" | \
+  sed "s/`Difficulty`//g" | \
+  sed "s/`Verdict`//g" | \
+  sed "s/::[a-z_]*//g" | \
+  cat >> "$OUTPUT" || true
 
 echo "" >> "$OUTPUT"
 echo "SET FOREIGN_KEY_CHECKS = 1;" >> "$OUTPUT"
