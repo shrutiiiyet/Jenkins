@@ -14,7 +14,7 @@
 // =============================================================================
 
 pipeline {
-    agent { label 'agent1' }
+    agent { label 'docker-agent' }
 
     // -------------------------------------------------------------------------
     // Parameters — visible on Jenkins "Build with Parameters" UI
