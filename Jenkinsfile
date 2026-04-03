@@ -31,21 +31,38 @@ pipeline {
             description: 'Seed the database with initial data (dump.sql)'
         )
 
-        // --- Secrets (should be filled per-build or set as defaults) ---
+        // --- Member Secrets ---
         password(
-            name: 'JWT_SECRET',
+            name: 'JWT_SECRET_MEMBER',
             defaultValue: '',
-            description: 'JWT signing secret for member & admin backends'
+            description: 'JWT signing secret for member backend'
         )
         password(
-            name: 'REFRESH_SECRET',
+            name: 'REFRESH_SECRET_MEMBER',
             defaultValue: '',
-            description: 'Refresh token signing secret'
+            description: 'Refresh token secret for member backend'
         )
         password(
-            name: 'SALTING',
+            name: 'SALTING_MEMBER',
             defaultValue: '',
-            description: 'Password salting value for hashing'
+            description: 'Password salting value for member backend'
+        )
+
+        // --- Admin Secrets ---
+        password(
+            name: 'JWT_SECRET_ADMIN',
+            defaultValue: '',
+            description: 'JWT signing secret for admin backend'
+        )
+        password(
+            name: 'REFRESH_SECRET_ADMIN',
+            defaultValue: '',
+            description: 'Refresh token secret for admin backend'
+        )
+        password(
+            name: 'SALTING_ADMIN',
+            defaultValue: '',
+            description: 'Password salting value for admin backend'
         )
 
         // --- Email & Notifications ---
@@ -364,9 +381,9 @@ EXTSQL
                 sh """
                     COMPOSE_PROFILES=${params.DB_ENGINE} \
                     DATABASE_URL='${env.DATABASE_URL}' \
-                    JWT_SECRET='${params.JWT_SECRET}' \
-                    REFRESH_SECRET='${params.REFRESH_SECRET}' \
-                    SALTING='${params.SALTING}' \
+                    JWT_SECRET='${params.JWT_SECRET_MEMBER}' \
+                    REFRESH_SECRET='${params.REFRESH_SECRET_MEMBER}' \
+                    SALTING='${params.SALTING_MEMBER}' \
                     EMAIL_ID='${params.EMAIL_ID ?: ''}' \
                     RESEND_API_KEY='${params.RESEND_API_KEY ?: ''}' \
                     GOOGLE_CLIENT_ID='${params.GOOGLE_CLIENT_ID ?: ''}' \
@@ -389,9 +406,9 @@ EXTSQL
                 sh """
                     COMPOSE_PROFILES=${params.DB_ENGINE} \
                     DATABASE_URL='${env.DATABASE_URL}' \
-                    JWT_SECRET='${params.JWT_SECRET}' \
-                    REFRESH_SECRET='${params.REFRESH_SECRET}' \
-                    SALTING='${params.SALTING}' \
+                    JWT_SECRET='${params.JWT_SECRET_ADMIN}' \
+                    REFRESH_SECRET='${params.REFRESH_SECRET_ADMIN}' \
+                    SALTING='${params.SALTING_ADMIN}' \
                     EMAIL_ID='${params.EMAIL_ID ?: ''}' \
                     CONTACT_EMAIL_ID='${params.CONTACT_EMAIL_ID ?: ''}' \
                     RESEND_API_KEY='${params.RESEND_API_KEY ?: ''}' \
