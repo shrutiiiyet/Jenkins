@@ -36,7 +36,7 @@ docker run -d --name jenkins \
 
 To create agents for the master node
 ```bash
-docker run -d --rm --name=agent1 -p 22:22 -e "JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOJKWBfo57hf1XOUkS9B/bU4BejHUe8c2
+docker run -d --rm --name=agent1 -p 22:22 -e "JENKINS_AGENT_SSH_PUBKEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOJKWBfo57hf1XOUkS9B/bU4BejHUe8c2yLI/c+29ipA" jenkins/ssh-agent:alpine-jdk21
 ```
 
 
