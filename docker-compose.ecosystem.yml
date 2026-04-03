@@ -64,8 +64,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3000"
-      DATABASE_URL: ${DATABASE_URL}
-      DIRECT_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-}
+      DIRECT_URL: ${DATABASE_URL:-}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SESSION_POOLER: ${SESSION_POOLER:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
@@ -73,9 +73,9 @@ services:
       - coc-network
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
-      retries: 5
+      retries: 3
     restart: unless-stopped
 
   # =========================================================================
@@ -89,9 +89,9 @@ services:
       PORT: "3000"
       NODE_ENV: production
       API_URL: "http://coc-api:3000/api/v1"
-      JWT_SECRET: ${JWT_SECRET}
-      REFRESH_SECRET: ${REFRESH_SECRET}
-      SALTING: ${SALTING}
+      JWT_SECRET: ${JWT_SECRET_MEMBER:-}
+      REFRESH_SECRET: ${REFRESH_SECRET_MEMBER:-}
+      SALTING: ${SALTING_MEMBER:-}
       RATE_LIMIT_WINDOW_MINUTES: ${RATE_LIMIT_WINDOW_MINUTES:-15}
       RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
       REFRESH_TTL: ${REFRESH_TTL:-7}
@@ -143,9 +143,9 @@ services:
       PORT: "8000"
       NODE_ENV: production
       API_URL: "http://coc-api:3000/api/v1"
-      JWT_SECRET: ${JWT_SECRET}
-      REFRESH_SECRET: ${REFRESH_SECRET}
-      SALTING: ${SALTING}
+      JWT_SECRET: ${JWT_SECRET_ADMIN:-}
+      REFRESH_SECRET: ${REFRESH_SECRET_ADMIN:-}
+      SALTING: ${SALTING_ADMIN:-}
       RATE_LIMIT_WINDOW_MINUTES: ${RATE_LIMIT_WINDOW_MINUTES:-15}
       RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
       REFRESH_TTL: ${REFRESH_TTL:-7}
